@@ -156,6 +156,14 @@ pub fn send_literal(target: &str, data: &str) -> Result<()> {
             "flowmux_buf",
         ])
         .status()
+        .or_else(|_| {
+            // tmux < 3.5 has no `-S` (paste control bytes verbatim); retry
+            // with the older flag set instead of surfacing "unknown flag".
+            Command::new("tmux")
+                .args(["paste-buffer", "-r", "-t", target, "-b", "flowmux_buf"])
+                .status()
+                .map(|_| ())
+        })
         .with_context(|| format!("failed to paste buffer to {}", target))?;
     Ok(())
 }
