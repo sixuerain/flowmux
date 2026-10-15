@@ -145,7 +145,7 @@ pub fn send_literal(target: &str, data: &str) -> Result<()> {
     }
     child.wait().context("tmux load-buffer failed")?;
 
-    Command::new("tmux")
+    let status = Command::new("tmux")
         .args([
             "paste-buffer",
             "-S",
@@ -155,16 +155,17 @@ pub fn send_literal(target: &str, data: &str) -> Result<()> {
             "-b",
             "flowmux_buf",
         ])
-        .status()
-        .or_else(|_| {
-            // tmux < 3.5 has no `-S` (paste control bytes verbatim); retry
-            // with the older flag set instead of surfacing "unknown flag".
-            Command::new("tmux")
-                .args(["paste-buffer", "-r", "-t", target, "-b", "flowmux_buf"])
-                .status()
-                .map(|_| ())
-        })
-        .with_context(|| format!("failed to paste buffer to {}", target))?;
+        .status();
+    // tmux 3.5+ has `-S` (paste control bytes verbatim); older versions
+    // (e.g. 3.4 on Ubuntu 24.04) reject it with "unknown flag", so fall
+    // back to the older flag set instead of surfacing the error.
+    let status = match status {
+        Ok(s) if s.success() => Ok(s),
+        _ => Command::new("tmux")
+            .args(["paste-buffer", "-r", "-t", target, "-b", "flowmux_buf"])
+            .status(),
+    };
+    status.with_context(|| format!("failed to paste buffer to {}", target))?;
     Ok(())
 }
 
