@@ -2755,7 +2755,10 @@ impl App {
             return true;
         }
         match key.code {
-            KeyCode::Char('q') => return false,
+            // NOTE(sixuerain fork): plain 'q' no longer quits the dashboard — it
+            // made the TUI die when typed accidentally, taking its tmux window
+            // down with it. Quit via killing the pane if ever needed.
+            KeyCode::Char('q') => return true,
             KeyCode::Char('?') => self.open_startup_guide(false),
             KeyCode::Tab => self.cycle_projects(),
             KeyCode::Char(digit @ ('0'..='9')) => self.switch_to_project_by_digit(digit),

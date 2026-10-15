@@ -731,8 +731,7 @@ fn render_keybindings_bar(
     push_keybind(&mut spans, "?", "help", theme, dimmed);
     spans.push(Span::raw(" "));
     push_keybind(&mut spans, "enter", "open", theme, dimmed);
-    spans.push(Span::raw(" "));
-    push_keybind(&mut spans, "q", "quit", theme, dimmed);
+    // NOTE(sixuerain fork): 'q' no longer quits, so the hint is gone too.
 
     let progress_message = startup_progress.map(startup_progress_message);
     let progress_width = progress_message
